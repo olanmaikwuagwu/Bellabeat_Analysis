@@ -23,7 +23,7 @@ The data for this analysis was obtained from the FitBit Fitness Tracker Data in 
 
 ### Tools
 - Excel (for data cleaning)
-- SQL server (for data analysis)
+- Big Query (for data analysis)
 - Tableau (for reporting)
 
 ### Data cleaning process
