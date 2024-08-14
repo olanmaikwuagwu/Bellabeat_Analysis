@@ -41,33 +41,33 @@ The analysis answered the following questions;
 The following codes were written and executed on Bigquery.
 
 ```sql
------------------Derive summary statistics from the joined table and classify users by their level of activity-----------------------------
--------- Also determine the percentages of the classified users---------------------------------------------
+-----------------Derive summary statistics from the joined table and classify users by their level of activity------------------------
+-----------------Also determine the percentages of the classified users---------------------------------------------------------------
 
 WITH summarystat AS
-(SELECT da.Id AS dailyactivityid,  
-TotalSteps,  
-Calories,
-TotalMinutesAsleep
-FROM daily_activity da
-JOIN dailysleep_records   dsr
-ON da.id = dsr.id
-AND da.date = dsr.date
-),
+	(SELECT da.Id AS dailyactivityid,  
+	TotalSteps,  
+	Calories,
+	TotalMinutesAsleep
+	FROM daily_activity da
+	JOIN dailysleep_records   dsr
+	ON da.id = dsr.id
+	AND da.date = dsr.date
+	),
 summarised AS
 (
-SELECT  dailyactivityid, 
-AVG(totalsteps) AS mean_daily_steps, 
-AVG(calories) AS mean_daily_calories, 
-AVG(totalminutesasleep) AS mean_daily_sleep
-FROM summarystat
-GROUP BY dailyactivityid),
+	SELECT  dailyactivityid, 
+	AVG(totalsteps) AS mean_daily_steps, 
+	AVG(calories) AS mean_daily_calories, 
+	AVG(totalminutesasleep) AS mean_daily_sleep
+	FROM summarystat
+	GROUP BY dailyactivityid),
 classified AS(
-SELECT 
-dailyactivityid,
-mean_daily_steps,
-mean_daily_calories,
-mean_daily_sleep,
+	SELECT 
+	dailyactivityid,
+	mean_daily_steps,
+	mean_daily_calories,
+	mean_daily_sleep,
 CASE 
 	WHEN mean_daily_steps < 5000 THEN 'sedentary'
 	WHEN mean_daily_steps >= 5000 AND mean_daily_steps <= 7499 THEN 'lightly active'
@@ -77,17 +77,17 @@ CASE
 FROM summarised
 ),
 class_nos AS(
-SELECT 
-classifications,
-COUNT(*) AS total
-FROM classified
-GROUP BY classifications
+	SELECT 
+	classifications,
+	COUNT(*) AS total
+	FROM classified
+	GROUP BY classifications
 ),
 total_count AS(
-SELECT 
-classifications,
-ROUND(total * 100 / (SELECT SUM(total) FROM class_nos), 0) AS percentage
-FROM  class_nos
+	SELECT 
+	classifications,
+	ROUND(total * 100 / (SELECT SUM(total) FROM class_nos), 0) AS percentage
+	FROM  class_nos
 )
 SELECT
 DISTINCT cn.classifications,
@@ -101,48 +101,48 @@ cn.classifications = tc.classifications;
 
 ---------------------Determine what days of the week users are more active------------------------------------------------------
 WITH weekday AS(
-SELECT
-WEEKDAY(da.`Date`) AS day,
-totalsteps,
-totalminutesasleep
-FROM daily_activity da
-JOIN dailysleep_records dsr
-ON da.id = dsr.id
-AND da.date = dsr.date
+	SELECT
+	WEEKDAY(da.`Date`) AS day,
+	totalsteps,
+	totalminutesasleep
+	FROM daily_activity da
+	JOIN dailysleep_records dsr
+	ON da.id = dsr.id
+	AND da.date = dsr.date
 ),
 days AS(
-SELECT 
-totalsteps,
-totalminutesasleep,
+	SELECT 
+	totalsteps,
+	totalminutesasleep,
 CASE
-WHEN day = 0 THEN 'Monday'
-WHEN day = 1 THEN 'Tuesday'
-WHEN day = 2 THEN 'Wednesday'
-WHEN day = 3 THEN 'Thursday'
-WHEN day = 4 THEN 'Friday'
-WHEN day = 5 THEN 'Saturday'
-WHEN day = 6 THEN 'Sunday'
-ELSE ' '
-END AS weeknames 
-FROM weekday),
+	WHEN day = 0 THEN 'Monday'
+	WHEN day = 1 THEN 'Tuesday'
+	WHEN day = 2 THEN 'Wednesday'
+	WHEN day = 3 THEN 'Thursday'
+	WHEN day = 4 THEN 'Friday'
+	WHEN day = 5 THEN 'Saturday'
+	WHEN day = 6 THEN 'Sunday'
+	ELSE ' '
+	END AS weeknames 
+	FROM weekday),
 means AS(
-SELECT 
-weeknames,
-AVG(totalsteps),
-AVG(totalminutesasleep)
-FROM days
-GROUP BY weeknames
+	SELECT 
+	weeknames,
+	AVG(totalsteps),
+	AVG(totalminutesasleep)
+	FROM days
+	GROUP BY weeknames
 )
 SELECT * FROM means;
 
 ----------------------------Determine what times of the day users are more active-------------------------------------------------
 WITH separation_of_datetime AS(
-SELECT
-Id,
-SUBSTRING(`activityhour`, 1, 10) AS the_day,
-SUBSTRING(`activityhour`, 12, 19) AS time_of_day,
-steptotal
-FROM hourly_steps
+	SELECT
+	Id,
+	SUBSTRING(`activityhour`, 1, 10) AS the_day,
+	SUBSTRING(`activityhour`, 12, 19) AS time_of_day,
+	steptotal
+	FROM hourly_steps
 )
 SELECT
 Id,
@@ -156,8 +156,8 @@ GROUP BY Id, the_day, time_of_day;
 ------------------------------Daily steps and daily sleep------------------------------------------------------------------
 
 SELECT 
-da.totalsteps,
-dsr.totalminutesasleep
+	da.totalsteps,
+	dsr.totalminutesasleep
 FROM daily_activity da
 JOIN dailysleep_records dsr
 ON da.id = dsr.id
@@ -165,9 +165,36 @@ AND da.date = dsr.date;
 
 --------------------------------------Daily steps and calories--------------------------------------------------------------
 SELECT 
-totalsteps,
-calories
+	totalsteps,
+	calories
 FROM daily_activity;
+
+
+-----------------------------------Check the number of days users wore their devices----------------------------
+WITH num_in_a_month AS(
+	SELECT
+	Id,
+	COUNT(*) AS no_of_days
+	FROM dailysleep_records
+	GROUP BY id),
+regularity AS(
+	SELECT Id,
+	no_of_days,
+CASE 
+	WHEN no_of_days >= 1 AND no_of_days <= 10 THEN 'Low Use'
+	WHEN no_of_days >= 10 AND no_of_days <= 20 THEN 'Moderate Use'
+	WHEN no_of_days >= 21 AND no_of_days <= 31 THEN 'High Use'
+	ELSE ' '
+	END AS usage_type
+FROM num_in_a_month
+),
+percent_of_categories AS(
+	SELECT
+	usage_type,
+	(COUNT(usage_type) * 100 / (SELECT SUM(COUNT(usage_type)) OVER() FROM regularity)) AS the_percentages
+	FROM regularity
+	GROUP BY 1)
+SELECT * FROM percent_of_categories;
 
 ;
 ```
