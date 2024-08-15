@@ -15,7 +15,11 @@
 ### Project Overview
 ---
 
-This project was designed to analyze the way customers use a fitness device produced by a company named Bellabeat. The result of the analysis will help stakeholders understand trends and patterns that will inform better marketing and device optimization.
+This project was designed to analyze the way customers use<img width="616" alt="Fitness screenshot" src="https://github.com/user-attachments/assets/eec6f8e3-f544-4875-94ee-ec6b818d9ef7">
+ a fitness device produced by a company named Bellabeat. The result of the analysis will help stakeholders understand trends and patterns that will inform better marketing and device optimization.
+
+<img width="616" alt="Fitness screenshot" src="https://github.com/user-attachments/assets/43fc0ce7-f672-4ccc-bde4-3583d54dda87">
+
 
 ### Data source
 
